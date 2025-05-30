@@ -1,40 +1,122 @@
 'use strict';
 
-let isClicked = false;
+const removeNotification = (element, time) => {
+  setTimeout(() => {
+    element.parentNode.removeChild(element);
+  }, time);
+};
 
-function createMessage(message) {
-  const div = document.createElement('div');
+const firstPromise = new Promise((resolve, reject) => {
+  const handleClick = (e) => {
+    if (e.button === 0) {
+      resolve('First promise was resolved');
+      document.removeEventListener('click', handleClick);
+    }
+  };
 
-  div.setAttribute('data-qa', 'notification');
-  div.textContent = message;
-
-  if (message.includes('resolved')) {
-    div.classList.add('success');
-  }
-
-  if (message.includes('rejected')) {
-    div.classList.add('error');
-  }
-  document.body.appendChild(div);
-}
-
-const p1 = new Promise((resolve, reject) => {
-  const successMessage = 'First promise was resolved';
-
-  document.addEventListener('click', () => {
-    isClicked = true;
-    resolve(successMessage);
-  });
+  document.addEventListener('click', handleClick);
 
   setTimeout(() => {
-    if (isClicked === false) {
-      reject(new Error('First promise was rejected'));
-    }
+    reject(new Error('First promise was rejected'));
+    document.removeEventListener('click', handleClick);
   }, 3000);
 });
 
-p1.then((message) => {
-  createMessage(message);
-}).catch((error) => {
-  createMessage(error.message);
+firstPromise
+  .then((message) => {
+    const div = document.createElement('div');
+
+    div.classList.add('success');
+    div.textContent = message;
+    div.setAttribute('data-qa', 'notification');
+
+    document.body.appendChild(div);
+
+    removeNotification(div, 3000);
+  })
+  .catch((error) => {
+    setTimeout(() => {
+      const div = document.createElement('div');
+
+      div.classList.add('error');
+      div.textContent = error;
+      div.setAttribute('data-qa', 'notification');
+
+      document.body.appendChild(div);
+
+      removeNotification(div, 3000);
+    }, 3000);
+  });
+
+const secondPromise = new Promise((resolve, reject) => {
+  const handleClick = (e) => {
+    if (e.button === 0 || e.button === 2) {
+      resolve('Second promise was resolved');
+      document.removeEventListener('click', handleClick);
+    }
+  };
+
+  document.addEventListener('click', handleClick);
+
+  document.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    handleClick(e);
+  });
+});
+
+secondPromise.then((message) => {
+  const div = document.createElement('div');
+
+  div.classList.add('success');
+  div.textContent = message;
+  div.setAttribute('data-qa', 'notification');
+
+  document.body.appendChild(div);
+
+  removeNotification(div, 3000);
+});
+
+const thirdPromise = new Promise((resolve, reject) => {
+  let leftClicked = false;
+  let rightClicked = false;
+
+  const handleClick = (e) => {
+    if (e.button === 0) {
+      leftClicked = true;
+    }
+
+    if (e.button === 2) {
+      rightClicked = true;
+    }
+
+    if (leftClicked && rightClicked) {
+      resolve('Third promise was resolved');
+      document.removeEventListener('click', handleClick);
+      document.removeEventListener('contextmenu', handleContextMenu);
+    }
+  };
+
+  const handleContextMenu = (e) => {
+    e.preventDefault();
+    handleClick(e);
+  };
+
+  document.addEventListener('click', handleClick);
+
+  document.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    handleClick(e);
+  });
+});
+
+thirdPromise.then((message) => {
+  const div = document.createElement('div');
+
+  div.classList.add('success');
+  div.textContent = message;
+  div.setAttribute('data-qa', 'notification');
+
+  document.body.appendChild(div);
+
+  removeNotification(div, 3000);
 });
